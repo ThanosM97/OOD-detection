@@ -9,3 +9,5 @@ from .imagenet64 import ImageNet64
 from .celeba import CelebA
 from .svhn import SVHN
 from .mnist import MNIST
+from .fmnist import FMNIST
+from .omniglot import OMNIGLOT
