@@ -17,6 +17,7 @@ class ConditionalBernoulli(ConditionalDistribution):
 
     def log_prob(self, x, context):
         dist = self.cond_dist(context)
+        dist.set_default_validate_args(False)
         return sum_except_batch(dist.log_prob(x.float()))
 
     def sample(self, context):
@@ -40,4 +41,4 @@ class ConditionalBernoulli(ConditionalDistribution):
         return self.cond_dist(context).mean
 
     def mode(self, context):
-        return (self.cond_dist(context).logits>=0).long()
+        return (self.cond_dist(context).logits >= 0).long()
