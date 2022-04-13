@@ -11,15 +11,24 @@ class SVHN(TrainTestLoader):
     https://research.google/pubs/pub37648/
     '''
 
-    def __init__(self, root=DATA_PATH, download=True, num_bits=8, pil_transforms=[]):
+    def __init__(self, root=DATA_PATH, download=True, num_bits=8,
+                 pil_transforms=[]):
 
         self.root = root
 
         # Define transformations
-        trans_train = pil_transforms + [ToTensor(), Quantize(num_bits)]
-        trans_test = [ToTensor(), Quantize(num_bits)]
+        torch_transforms = [ToTensor()]
+        if num_bits != 8:
+            torch_transforms.append(Quantize(num_bits=num_bits))
+
+        trans_train = pil_transforms + torch_transforms
+        trans_test = pil_transforms + torch_transforms
 
         # Load data
         sub_root = os.path.join(root, 'SVHN')
-        self.train = UnsupervisedSVHN(sub_root, split='train', transform=Compose(trans_train), download=download)
-        self.test = UnsupervisedSVHN(sub_root, split='test', transform=Compose(trans_test), download=download)
+        self.train = UnsupervisedSVHN(
+            sub_root, split='train', transform=Compose(trans_train),
+            download=download)
+        self.test = UnsupervisedSVHN(
+            sub_root, split='test', transform=Compose(trans_test),
+            download=download)
