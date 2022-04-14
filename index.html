@@ -3,13 +3,386 @@
      <meta charset="UTF-8">
      <meta http-equiv="X-UA-Compatible" content="IE=edge">
      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <title>Document</title>
- </head>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=AM_CHTML"></script>
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+     <style> a { color: #212529; text-decoration: none; font-style: italic;} a:hover {color: rgb(49, 117, 205); } p { text-align: justify;} </style>
+     <title>Detecting Out-of-Distribution Inputs</title>
+</head>
+<!-- style="background: #333; color: whitesmoke;" -->
+<!-- background-color: #162d43; color: whitesmoke; -->
+
  <body>
-     <h1>OOD detection</h1>
-     <p>kanwvkjeb</p>
-     <p>kanwvkjeb</p>
-     <p>kanwvkjeb</p>
-     <p>kanwvkjeb</p>
+    <div id ="header" class="h-25 pt-4" style="background-image: url(images/background.jpg); color: whitesmoke;">
+        <div class="w-50 mx-auto text-center" >
+            <h1>Detecting Out-of-Distribution Inputs</h1>
+            <h5>A reproducibility project based on the paper of Serra et al.: “Input
+           complexity and out-of-distribution detection with likelihood-based generative models"</h5>
+        </div>  
+    </div>
+    <section class="w-50 mx-auto">
+        <!-- INTRODUCTION -->
+        <h2 class="mt-5">Introduction</h2>
+        <p>Machine learning systems often lack the reliability and robustness, when employed to detect <i>Out-of-Distribution (OOD)</i> inputs. 
+            A promising solution to this issue is likelihood-based generative models. The likelihoods can reveal inefficiencies for certain types of 
+            inputs that do not come from the same distribution as the training data. In this project, we are reproducing the work of <a href="#4">Serra et al. (2019)</a> 
+            to address the input complexity problem on OOD detection for likelihood-based generative models. We train Variational AutoEncoders (VAEs)  
+            on the FashionMNIST and CIFAR10 datasets, and then evaluate their performance on OOD detection on four popular datasets, namely MNIST, 
+            OMNIGLOT, CIFAR100, and CelebA, and two synthetic datasets of Random Gaussian Noise and Constant values.
+        </p>
+        
+        <!-- PROBLEM STATEMENT -->
+        <h2 class="mt-4">Problem Statement</h2>
+        <p>A salient requirement of real-world machine learning systems is the ability to determine whether their input data differs significantly from 
+            the data that was used during training. This process is known as Out-Of-Distribution (OOD) detection and becomes particularly relevant for 
+            deep neural network classifiers, which appear to be prone to erroneous predictions for OOD data (with high confidence) (<a href="#1"> Nguyen et al., 2015</a>). </p>
+        <p>In the absence of labels, OOD detection can be performed by learning a density model M, which attempts to approximate the true distribution 
+            of the training examples ( `p^{**}(x)`). In theory, when achieving a good approximation (i.e., `p(x│M)≈ p^{**} (x)`), OOD data should correspond to 
+            lower likelihoods under model M than data from the training distribution. Advances in generative models have made it possible to learn such 
+            good density approximations for highly complex training data, with significant accuracy. However, contrary to the expected results, recent 
+            studies ( <a href="#2">Choi et al., 2018</a> ; <a href="#3">Nalisnick et al., 2018</a>) have shown that generative models often fail to distinguish between OOD and train data 
+            from their likelihood estimations. To adduce a pertinent example, <a href="#fig1">Figure 1</a> shows that generative models trained on CIFAR10 can yield higher 
+            likelihood scores for a simple dataset (SVHN) than for CIFAR10 itself.</p>
+        <figure id="fig1" class="text-center">
+            <img src="images/likelihoods.JPG" alt="likelihoods" class="figure-img">
+            <figcaption class="figure-caption text-center">Figure 1: Likelihoods from a Glow model trained on CIFAR10, adapted from <a href="#4">Serra et al.(2019)</a>.</figcaption>
+        </figure>
+        <p>In <a href="#4">Serra et al. (2019)</a>, the authors attempt to clarify the roots for this predicament, by claiming that the likelihoods produced from generative models 
+            are strongly correlated with the complexity of the inputs of the test datasets. In particular, it is argued that there is a clear negative
+             correlation between complexity and likelihood, which incentivizes the authors to propose a new score, combining the log-likelihood with a 
+             complexity estimate, as a means of more efficient OOD detection. In this study, we explore the validity of this hypothesis, along with its 
+             generalization, by reimplementing the authors’ pipeline and using a different generative model, namely Variational Autoencoders (VAEs).</p>
+        
+        <!-- VAEs -->
+        <h2 class="mt-4">Variational AutoEncoders</h2>
+        <p>Firstly, we will provide a brief overview of the autoencoders and their properties, which constitute the basis of VAEs In particular, autoencoders 
+            consist of two neural networks, namely the encoder and the decoder, and attempt to iteratively minimize the reconstruction loss between the 
+            input and output. At each iteration the encoder transforms the input data into a latent space representation (typically of lower dimensionality),
+             which are subsequently decoded to produce the autoencoder’s output. The input-output pairs are compared, and the reconstruction error is 
+             backpropagated through the architecture to update all the network weights via gradient descent. Once the autoencoder has been trained, we could 
+             in theory sample a point from the latent space and use the trained decoder to produce an artificial output, thus generating content. Nevertheless, 
+             the quality of this content depends on the regularity of the latent space. If we also consider that autoencoders are solely trained on the 
+             reconstruction loss minimization objective, without focusing on the structure of the latent space, it becomes apparent that the system will most
+              likely overfit, implying that regions of the latent space will correspond to meaningless content in the original input space.</p>
+     
+        <p>It becomes clear that in order to counteract this shortcoming of autoencoders for generative purposes, we need to ensure that the latent space is 
+            regularized. In principle, VAEs are autoencoders, which are regularized during training to make sure that the latent space includes favorable properties 
+            for content generation. The architecture of VAEs is composed of both an encoder and a decoder network and follows the pipeline of autoencoders, with 
+            the main distinction being that VAEs encode an input as a distribution over the latent space, instead of a single point. Consequently, the loss function 
+            of VAEs consists of two distinct terms, namely a reconstruction and a regularization term, with the latter being expressed as the Kullback-Leibler 
+            divergence between a standard Gaussian distribution and the latent space distribution. Moreover, in order to ensure the continuity and completeness 
+            of the latent space, and by extension its generative capabilities, both the covariance and the mean distributions of the encoder need to be regularized.</p>
+        
+        <figure id="fig2" class="text-center">
+            <img src="images/VAE representation.JPG" alt="vae" class="figure-img w-75">
+            <figcaption class="figure-caption text-center">Figure 2: Architecture of Variational AutoEncoders.</figcaption>
+        </figure>
+
+        <p>VAEs constitute one of the major families of deep generative models, being capable of highly realistic content generation. We opted for VAEs as our 
+            generative architecture, since ,as mentioned in the Problem Statement, likelihood-based generative models can be leveraged for successfully detecting 
+            OOD inputs, which could have a detrimental effect on the robustness and reliability of a machine learning model. Another incentive for this choice was 
+            that in the original paper different generative approaches are examined, namely PixelCNN++ <a href="#5">(Salimans et al., 2017)</a>  and Glow 
+            <a href="#6">(Kingma et al., 2018)</a>, and we wanted to validate whether the paper hypothesis would hold for a different architecture.</p>
+        
+        <!-- ORIGINAL IMPLEMENTATION -->
+        <h2 class="mt-4">Original Implementation</h2>
+        <p>Following common practices for evaluating generative models, the authors opted for using the negative log-likelihood of an input x given a model M, 
+            which is expressed in bits per dimension, where dimension corresponds to the total size of x:</p>
+        
+        <div class="text-center my-2">` -l_M(x) = -log_2(p(x|M)) `</div>
+        
+        <p>A wide range of well-known, publicly available data sets were used, with FMIST and CIFAR10 being utilized for training the different generative models 
+            (PixelCNN++, Glow), and Omniglot, MNIST, SVHN, CIFAR100, CelebA, FaceScrub, TrafficSign, along with constant images and images generated from random
+             noise for testing. A full list of all the considered datasets and their summary is shown in <a href="#tab1">Table 1</a>. All images from all considered 
+             datasets were resized to 3x32x32 pixels.For the data sets that did not match this size configuration the authors followed a bi-linear resizing strategy,
+              whereas the authors triplicated the channel dimension of gray-scale images to produce 3 channels.</p>
+        
+        <figure id="tab1" class="text-center">
+            <img src="images/datasets.png" alt="datasets" class="figure-img w-75">
+            <figcaption class="figure-caption text-center">Table 1: Summary of the data sets considered in <a href="#4">Serra et al.(2019)</a>.</figcaption>
+        </figure>
+        
+        <p>The authors first conducted an exploratory analysis by calculating the log-likelihood distribution for all the examined datasets as they were generated 
+            by a Glow model trained on CIFAR10, which can be seen in <a href="#fig3">Figure 3</a>. We observe that simpler datasets appear to have higher log-likelihoods, 
+            with noisy and colourful datasets exhibiting lower log-likelihoods and CIFAR10 itself being positioned in the middle of the spectrum. The authors argue 
+            that this is a strong indication for a connection between log-likelihood estimation and complexity, which acts as an impetus for their approach in 
+            designing an OOD detection score based on complexity.</p>
+        
+        <figure id="fig3" class="text-center">
+            <img src="images/loglikelihoods.png" alt="log-likelihoods" class="figure-img w-75">
+            <figcaption class="figure-caption text-center">Figure 3: Log-likelihoods from a Glow model trained on CIFAR10, adapted from <a href="#4">Serra et al.(2019)</a>.</figcaption>
+        </figure>
+        
+        <p>In particular, the authors attempt to define complexity by calculating an upper bound using a lossless compression algorithm <a href="#7">(Thomas et al., 2006)</a>. Since the input data 
+            are images, PNG, JPEG2000, and FLIF compressors were examined. To attain a complexity estimate (`L(x)`) in bits per dimension, first the input x is compressed 
+            with one of the compressors, producing a string of bits (`C(x)`), whose length is subsequently normalized by the dimensionality of x (d corresponds to 
+            the total number of pixels in an image):</p>
+
+        <div class="text-center my-2">` L(x) = |C(x)|/d `</div>
+        
+        <p>By using this estimate, highly complex inputs should require more bits per dimension, whereas simpler ones can be compressed with fewer bits per dimension. 
+            The authors found Pearson’s correlation coefficient values of -0.75 and -0.9 for models trained on FashionMNIST and CIFAR10 respectively, when studying the 
+            relation of their complexity estimates and the models’ log-likelihoods. However, this implies that complexity estimate would behave similarly to log-likelihoods 
+            (negative correlation) when used for OOD detection.</p>
+
+        <p>To compensate for the fact that complexity appears to account for most of the variability in the likelihoods, the authors propose a new OOD score, which is simply 
+            defined by the subtraction of the complexity estimate from the negative log-likelihood. The higher the S score, the more OOD the input:</p>
+
+        <div class="text-center my-2">` S(x) = -l_M(x) - L(x) `</div>
+
+        <p>The authors argue that the S score can be used for a range of different strategies, pertinent to OOD detection, ranging from simply using it as a score and 
+            performing OOD ranking, to interpreting S as a Bayes factor and directly assigning an input z to be OOD for `S(z) > 0`, or using ground truth OOD data to 
+            optimize a threshold value for `S(z)`. Nevertheless, for the rest of their analysis the authors decide to keep their evaluation as generic as possible and 
+            simply utilize S directly as an OOD score, which is subsequently used to calculate the AUROC values, which are traditionally used for OOD detection.</p>
+
+
+
+        <!-- REIMPLEMENTATION -->
+        <h2 class="mt-4" id="approach">Reimplementation</h2>
+        <p>Since we aimed at reproducing the results of the original paper, we adopted the usage of negative log-likelihoods and the proposed complexity estimate to 
+            produce the S score for OOD detection. Regarding the considered datasets from <a href="#tab1">Table 1</a>, we used FashionMNIST and CIFAR10 for training our 
+            generative models and MNIST, Omniglot, CIFAR100, CelebA, SVHN, Noise and Constant for testing for OOD. It should also be noted that we only used PNG as an image compressor.
+            We opted for testing the original hypothesis both on FashionMNIST and CIFAR10, in an attempt to validate its credibility for different levels of complexity in the training data.</p>
+
+        <p>The main differentiation of our approach from the original lies in the fact that we leveraged VAEs as our generative model. <a href="#fig4">Figure 4</a> displays 
+            the overall architecture of our network, which was used for training and producing our generative model.</p>
+        
+        <figure id="fig4" class="text-center">
+            <img src="images/network.jpg" alt="network" class="figure-img w-100">
+            <figcaption class="figure-caption text-center">Figure 4: Visualization of the network's architecture.</figcaption>
+        </figure>
+
+        <p>For models trained on both FMNIST and CIFAR10 we used the same encoder and decoder architectures and used different latent space sizes to accommodate for the 
+            complexity discrepancies of used training datasets (10 for FMNIST and 75 for CIFAR100 respectively). The encoder was defined as a convolution network, inspired 
+            by the architecture used by <a href="#8">Gulrajani et al. (2017)</a>, whereas the decoder simply transposed the architecture of the encoder. The encoder uses leaky 
+            ReLU activation functions with a slope of 0.2, whereas the decoder utilizes ReLUs. The architectures of the encoder and the decoder can be seen in more detail in 
+            Tables <a href="#tab2">2</a> and <a href="#tab3">3</a> respectively. Regarding the training, both models were trained for 200 epochs, with a fixed learning rate 
+            of 0.001 and a batch size of 128 images.</p>
+        
+        <div id="tab2" class="d-flex justify-content-evenly">
+            <table class="d-inline table table-border text-center">
+                <caption class="text-center">Table 2: Encoder Architecture</caption>
+                <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Kernel</th>
+                    <th>Strides</th>
+                    <th>Feature Maps</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Input</td><td>5x5</td><td>2x2</td><td>8</td></tr>
+                <tr>
+                    <td>Conv1</td><td>5x5</td><td>1x1</td><td>16</td></tr>
+                <tr>
+                    <td>Conv2</td><td>5x5</td><td>2x2</td><td>32</td></tr>
+                <tr>
+                    <td>Conv3</td><td>5x5</td><td>1x1</td><td>64</td></tr>
+                <tr>
+                    <td>Conv4</td><td>5x5</td><td>2x2</td><td>64</td></tr>
+                <tr>
+                    <td>Conv5</td><td>--</td><td>--</td><td>2* latent_dim</td></tr>
+                </tbody>
+            </table>
+
+            <table id="tab3" class="d-inline table table-border text-center">
+                <caption class="text-center">Table 3: Decoder Architecture</caption>
+                <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Kernel</th>
+                    <th>Strides</th>
+                    <th>Feature Maps</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Conv5</td><td>--</td><td>--</td><td>64</td></tr>
+                <tr>
+                    <td>Conv6</td><td>5x5</td><td>2x2</td><td>64</td></tr>
+                <tr>
+                    <td>Conv7</td><td>5x5</td><td>1x1</td><td>64</td></tr>
+                <tr>
+                    <td>Conv8</td><td>5x5</td><td>2x2</td><td>32</td></tr>
+                <tr>
+                    <td>Conv9</td><td>5x5</td><td>1x1</td><td>16</td></tr>
+                <tr>
+                    <td>Output</td><td>5x5</td><td>2x2</td><td>3</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <p>VAEs learn stochastic non-invertible transformations, which typically inhibits tractable estimation of the marginal likelihoods, as described in 
+            <a href="#9">Nielsen et al. (2020)</a>. To compensate for this limitation, the authors propose SurVAE flows, a modular framework of composable transformations, 
+            that attempts to bridge the gap between normalizing flows and VAEs and produce a more efficient and robust generative model. SurVAE flows relies on surjective 
+            transformations, which are capable of computing the exact likelihood in one direction and a stochastic likelihood in the reverse direction respectively, thus 
+            providing a lower bound on the corresponding likelihood. In our experiments we leverage SurVAE flows and its stochastic transformations to build our VAE architecture. 
+            The encoder’s distribution is approximated by a multivariate Gaussian distribution with conditional mean and log standard deviation, while the decoder’s is 
+            approximated by a Gaussian distribution with conditional mean and learned standard deviation. </p>
+
+        <!-- FMNIST MODEL RESULTS -->
+        <h2 class="mt-4">FMNIST Model Results</h2>
+        <p>In this section we will present both qualitative and quantitative results germane to the performance of our VAE generative model, which was trained 
+            on the FMNIST dataset, and attempt to compare our findings with those of the original paper. </p>
+
+        <p> <a href="#fig5">Figure 5</a> shows the relation between the likelihoods (normalized with respect to the largest value in the entirety of the considered test datasets)
+             of our model trained on FMNIST  and the complexity estimates for the corresponding inputs of the examined test sets. Upon observing the graph, contrary to 
+             the results of the original paper, there appears to be an unsignificant negative correlation between the log-likelihood and the complexity estimate, with a 
+             Pearson’s coefficient of -0.328. Nevertheless, we notice that a generative model trained on a simple dataset (such as FMNIST) is in fact capable of detecting 
+             OOD inputs with an optimal performance, by solely relying on the likelihoods. In particular, we notice that for more complicated test sets the model yields 
+             log-likelihoods close to zero, whereas images from the FMNIST test set yield the highest likelihoods. The examined model only assigns high likelihood (erroneous 
+             OOD prediction) for certain images from the Omniglot dataset. On the contrary, complexity on its own does not appear to be able to correctly detect OOD inputs 
+             for the entire complexity spectrum (reaching satisfactory performance for the most complicated datasets, but not being able to discriminate between FMNIST images 
+             and other images from simple datasets). Thus, the authors’ claims that complexity could theoretically substitute the log-likelihoods for the OOD task appears to 
+             not hold, at least for generative models trained on less complicated datasets.</p>
+
+        <figure id="fig5" class="text-center">
+            <img src="images/plot_FMNIST.png" alt="likelihood-plots" class="figure-img w-50">
+            <figcaption class="figure-caption text-center">Figure 5: Complexity estimates using a PNG compressor with respect to normalized likelihoods of a VAE model trained 
+                on FMNIST (for visualization purposes, we here employ a sample of 200 images per data set).</figcaption>
+        </figure>
+
+        <p>In the next part of our analysis, we will study the impact of S score for the OOD detection task. For that, we first trained a generative VAE model on the train 
+            partition of FMNIST, as it was previously explained, and computed the S scores and negative log-likelihoods that this model 
+            yields for the test partitions of different datasets. Subsequently, the area under the Receiver Operating Characteristic Curve (AUROC) is calculated for both of 
+            these scores, which is a widely adopted evaluation measure for the OOD detection task (<a href="#10">Hendrycks et al., 2018</a>). We notice that both scores appear 
+            to be able to correctly detect OOD inputs ranging from highly complex images to simpler ones, which correspond to really good AUROC values (`≈1`). Nevertheless, 
+            it should be mentioned that the complexity estimate appears to have a minor impact in the calculation of S score, which can be attributed to the discrepancy of 
+            scales between the log-likelihood and the complexity estimate.</p>
+
+        <table id="tab4" class="table table-border text-center w-75 mx-auto">
+            <caption class="text-center">Table 4: AUROC values using negative log-likelihood and the proposed S score for the VAE model trained on FMNIST using the PNG compressor.</caption>
+            <thead>
+              <tr>
+                <th rowspan="2">Datasets</th>
+                <th colspan="2">AUROC</th>
+                <th colspan="2">Average Scores</th>
+              </tr>
+              <tr>
+                <th>`S`</th>
+                <th>`-l_M`</th>
+                <th>`S`</th>
+                <th>`-l_M`</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Constant</td> <td>1.0</td><td>1.0</td><td>-2577.7</td><td>-2577.44</td></tr>
+              <tr><td>MNIST</td><td>1.0</td><td>1.0</td><td>-3.346</td><td>-1.305</td></tr>
+              <tr>
+                <td>OMNIGLOT</td><td>0.989</td><td>1.0</td><td>-1.885</td><td>-0.105</td></tr>
+              <tr>
+                <td>CIFAR100</td><td>1.0</td><td>1.0</td><td>-2916.23</td><td>-2910.37</td></tr>
+              <tr>
+                <td>SVHN</td><td>1.0</td><td>1.0</td><td>-1959.44</td><td>-1954.95</td></tr>
+              <tr>
+                <td>CelebA</td><td>1.0</td><td>1.0</td><td>-2610.4</td><td>-2604.71</td></tr>
+              <tr>
+                <td>CIFAR10</td><td>1.0</td><td>1.0</td><td>-2736.35</td><td>-2730.44</td></tr>
+              <tr>
+                <td>Noise</td><td>1.0</td><td>1.0</td><td>-2633.54</td><td>-2625.28</td></tr>
+              <tr>
+                <td>FMNIST (test)</td><td>-</td><td>-</td><td>-0.976</td><td>1.744</td></tr>
+            </tbody>
+        </table>
+
+        <!-- CIFAR10 MODEL RESULTS -->
+        <h2 class="mt-4">CIFAR10 Model Results</h2>
+        <p>In this section we will perform a similar analysis for our VAE generative model, which was trained on the CIFAR10 dataset, and attempt to compare our findings with 
+            those from the original paper. </p>
+
+        <p><a href="#fig6">Figure 6</a> shows the relation between the normalized likelihoods of our model trained on CIFAR10 and the complexity estimates for the corresponding 
+            inputs of the examined test sets. In this case, we indeed notice a stronger, albeit not as significant as the one reported in the original paper, negative correlation 
+            between the log-likelihoods and the complexity estimates, with a Pearson’s coefficient of -0.542. Two distinct clusters can be detected, corresponding to simpler and 
+            more complicated datasets respectively. It should be noted that the negative correlation appears to be more prominent within each of these clusters. We can also note 
+            that images originating from a simpler dataset such as SVHN and a more complicated one like CelebA appear to correspond to similar complexity estimates (around 4-5 bits/dimension), 
+            which is an indication that the proposed complexity estimate might not reflect the actual complexity of the datasets. We should also point out that generative models 
+            trained on more complicated datasets (like CIFAR10) cannot rely solely on the log-likelihoods for successful OOD detection, and that a different OOD measure is indeed 
+            deemed necessary. </p>
+
+
+        <figure id="fig6" class="text-center">
+            <img src="images/plot_CIFAR10.png" alt="likelihood-plots" class="figure-img w-50">
+            <figcaption class="figure-caption text-center">Figure 6: Complexity estimates using a PNG compressor with respect to normalized likelihoods of a VAE model trained 
+                on CIFAR10 (for visualization purposes, we here employ a sample of 200 images per data set).</figcaption>
+        </figure>
+
+        <p>We will perform a similar analysis regarding the impact of S score for the OOD detection task, for the generative VAE model trained on CIFAR10 and compare its 
+            performance with a simple negative log-likelihood score. In particular, <a href="#tab5">Table 5</a> shows the resulting AUROC values for both the S score and 
+            negative log-likelihood score for all the considered test sets. We notice that for generative models trained on more complicated datasets (like CIFAR10) the l
+            og-likelihoods fail to accurately detect all possibly OOD inputs. In particular, the unintuitive higher likelihoods for the SVHN datasets (as observed in 
+            <a href="#fig6">Figure 6</a>) correspond to a poor AUROC value of 0. Nevertheless, when looking at the AUROCs obtained with the S score, we notice an overall 
+            exacerbation in performance, especially for images from less complicated datasets such as MNIST, Omniglot and FMIST, which the model was capable of detecting 
+            as OOD using negative log-likelihood.</p>
+
+        <table id="tab5" class="table table-border text-center w-75 mx-auto">
+            <caption class="text-center">Table 5: AUROC values using negative log-likelihood and the proposed S score for the VAE model trained on CIFAR10 using the PNG compressor.</caption>
+            <thead>
+              <tr>
+                <th rowspan="2">Datasets</th>
+                <th colspan="2">AUROC</th>
+                <th colspan="2">Average Scores</th>
+              </tr>
+              <tr>
+                <th>`S`</th>
+                <th>`-l_M`</th>
+                <th>`S`</th>
+                <th>`-l_M`</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Constant</td> <td>0.0</td><td>0.0</td><td>1.656</td><td>1.91</td></tr>
+              <tr><td>MNIST</td><td>0.0</td><td>1.0</td><td>-1.2</td><td>0.841</td></tr>
+              <tr>
+                <td>OMNIGLOT</td><td>0.0</td><td>0.988</td><td>-0.088</td><td>0.9</td></tr>
+              <tr>
+                <td>CIFAR100</td><td>0.495</td><td>0.846</td><td>-4.724</td><td>1.129</td></tr>
+              <tr>
+                <td>SVHN</td><td>0.0</td><td>0.0</td><td>-2.82</td><td>1.669</td></tr>
+              <tr>
+                <td>CelebA</td><td>0.086</td><td>0.926</td><td>-4.572</td><td>1.118</td></tr>
+              <tr>
+                <td>FMNIST</td><td>0.0</td><td>1.0</td><td>-1.804</td><td>0.916</td></tr>
+              <tr>
+                <td>Noise</td><td>1.0</td><td>1.0</td><td>-12.367</td><td>-4.107</td></tr>
+              <tr>
+                <td>CIFAR10 (test)</td><td>-</td><td>-</td><td>-4.73</td><td>1.186</td></tr>
+            </tbody>
+        </table>
+
+        <!-- CONCLUSIONS -->
+        <h2 class="mt-4">Conclusions</h2>
+        <p>In conclusion our analysis showed different results from the ones presented in the original paper, with the S score failing to improve the performance for 
+            the OOD detection task. The complexity estimate proposed might not accurately mirror actual image complexity. Additionally, generative models trained with 
+            simpler datasets appear to not exhibit the strong negative correlation between the model’s log-likelihoods and the proposed complexity estimate that was 
+            observed for more complex datasets in the original paper. This discrepancy of our and the authors’ findings can be attributed to the different generative 
+            models used and the insufficient training in terms of epochs from our part. Regardless, more research is essential to further facilitate or dispute the authors’ 
+            hypothesis that complexity can be efficiently utilized for OOD detection.</p>
+
+
+        <!-- ACKNOWLEDGEMENTS -->
+        <h2 class="mt-4">Acknowledgements</h2>
+        <p>We would like to thank our TAs, Mikhail Glazunov and Aayush Singh, for giving us their support and valuable insights for the entirety of our project.</p>
+
+        <!-- REFERENCES -->
+        <h2 class="mt-5">References</h2>
+        <p id="1">[1] Nguyen, A., Yosinski, J., & Clune, J. (2015). Deep neural networks are easily fooled: High confidence predictions for unrecognizable images. 
+            In Proceedings of the IEEE conference on computer vision and pattern recognition (pp. 427-436).</p>
+        <p id="2">[2] Choi, H., Jang, E., & Alemi, A. A. (2018). Waic, but why? generative ensembles for robust anomaly detection. arXiv preprint arXiv:1810.01392.</p>
+        <p id="3">[3] Nalisnick, E., Matsukawa, A., Teh, Y. W., Gorur, D., & Lakshminarayanan, B. (2018). Do deep generative models know what they don't know?. arXiv 
+            preprint arXiv:1810.09136.</p>
+        <p id="4">[4] Serrà, J., Álvarez, D., Gómez, V., Slizovskaia, O., Núñez, J. F., & Luque, J. (2019). Input complexity and out-of-distribution detection with 
+            likelihood-based generative models. arXiv preprint arXiv:1909.11480</p>
+        <p id="5">[5] Salimans, T., Karpathy, A., Chen, X., & Kingma, D. P. (2017). Pixelcnn++: Improving the pixelcnn with discretized logistic mixture likelihood 
+            and other modifications. arXiv preprint arXiv:1701.05517.</p>
+        <p id="6">[6] Kingma, D. P., & Dhariwal, P. (2018). Glow: Generative flow with invertible 1x1 convolutions. Advances in neural information processing systems, 31.</p>
+        <p id="7">[7] Thomas, M. T. C. A. J., & Joy, A. T. (2006). Elements of information theory. Wiley-Interscience.</p>
+        <p id="8">[8] Gulrajani, I., Ahmed, F., Arjovsky, M., Dumoulin, V., & Courville, A. C. (2017). Improved training of wasserstein gans. Advances in neural 
+            information processing systems, 30.</p>
+        <p id="9">[9] Nielsen, D., Jaini, P., Hoogeboom, E., Winther, O., & Welling, M. (2020). Survae flows: Surjections to bridge the gap between vaes and flows. 
+            Advances in Neural Information Processing Systems, 33, 12685-12696.</p>
+        <p id="10">[10] Hendrycks, D., Mazeika, M., & Dietterich, T. (2018). Deep anomaly detection with outlier exposure. arXiv preprint arXiv:1812.04606.</p>
+     </section>
+    
+    
  </body>
  </html>
