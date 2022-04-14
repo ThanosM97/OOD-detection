@@ -1,3 +1,4 @@
+"""This module implements the evaluation of the model on OOD detection """
 import argparse
 from typing import Union
 
