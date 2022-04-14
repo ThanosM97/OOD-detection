@@ -1,10 +1,10 @@
 from survae.data.datasets.image import CelebADataset
 from torchvision.transforms import Compose, ToTensor
 from survae.data.transforms import Quantize
-from survae.data import TrainValidTestLoader, DATA_PATH
+from survae.data import TrainTestLoader, DATA_PATH
 
 
-class CelebA(TrainValidTestLoader):
+class CelebA(TrainTestLoader):
     '''
     The CelebA dataset of
     (Liu et al., 2015): https://arxiv.org/abs/1411.7766
@@ -18,10 +18,17 @@ class CelebA(TrainValidTestLoader):
         self.root = root
 
         # Define transformations
-        trans_train = pil_transforms + [ToTensor(), Quantize(num_bits)]
-        trans_test = [ToTensor(), Quantize(num_bits)]
+        torch_transforms = [ToTensor()]
+        if num_bits != 8:
+            torch_transforms.append(Quantize(num_bits=num_bits))
+
+        trans_train = pil_transforms + torch_transforms
+        trans_test = pil_transforms + torch_transforms
 
         # Load data
-        self.train = CelebADataset(root, split='train', transform=Compose(trans_train))
-        self.valid = CelebADataset(root, split='valid', transform=Compose(trans_test))
-        self.test = CelebADataset(root, split='test', transform=Compose(trans_test))
+        self.train = CelebADataset(
+            root, split='train', transform=Compose(trans_train))
+        self.valid = CelebADataset(
+            root, split='valid', transform=Compose(trans_test))
+        self.test = CelebADataset(
+            root, split='test', transform=Compose(trans_test))

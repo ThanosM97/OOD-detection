@@ -25,7 +25,7 @@ class Encoder(nn.Module):
         self.latent_dim = latent_dim
 
         self.encoder = nn.Sequential(
-            # IN: input_dimsx32x32 / OUT: hidden_dims[0]x15x15
+            # IN: input_dimx32x32 / OUT: hidden_dims[0]x15x15
             nn.Conv2d(in_channels=input_dim, out_channels=hidden_dims[0],
                       kernel_size=5, stride=2, padding=1),
             nn.LeakyReLU(negative_slope=0.2),
@@ -107,28 +107,21 @@ class Decoder(nn.Module):
                                padding=1),
             nn.ReLU(),
 
-            # IN: hidden_dims[2]x11x11 / OUT: hidden_dims[3]x13x13
+            # IN: hidden_dims[2]x11x11 / OUT: hidden_dims[3]x15x15
             nn.ConvTranspose2d(hidden_dims[2],
                                hidden_dims[3],
                                kernel_size=5,
                                stride=1,
-                               padding=1),
+                               padding=0),
             nn.ReLU(),
 
-            # IN: hidden_dims[3]x13x13 / OUT: output_dimx28x28
+            # IN: hidden_dims[3]x15x15 / OUT: output_dimx32x32
             nn.ConvTranspose2d(hidden_dims[3],
                                out_channels=output_dim,
                                kernel_size=5,
                                stride=2,
                                padding=1,
-                               output_padding=1),
-            nn.ReLU(),
-
-            # IN: output_dimx28x28 / OUT: output_dimx32x32
-            nn.ConvTranspose2d(output_dim,
-                               output_dim,
-                               kernel_size=5,
-                               stride=1)
+                               output_padding=1)
         )
 
     def forward(self, z: Tensor) -> Tensor:

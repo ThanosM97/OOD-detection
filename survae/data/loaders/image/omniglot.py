@@ -16,8 +16,12 @@ class OMNIGLOT(TrainTestLoader):
         self.root = root
 
         # Define transformations
-        trans_train = pil_transforms + [Quantize(num_bits)]
-        trans_test = [Quantize(num_bits)]
+        torch_transforms = [ToTensor()]
+        if num_bits != 8:
+            torch_transforms.append(Quantize(num_bits=num_bits))
+
+        trans_train = pil_transforms + torch_transforms
+        trans_test = pil_transforms + torch_transforms
 
         # Load data
         self.train = OMNIGLOTDataset(
