@@ -8,8 +8,6 @@
      <style> a { color: #212529; text-decoration: none; font-style: italic;} a:hover {color: rgb(49, 117, 205); } p { text-align: justify;} </style>
      <title>Detecting Out-of-Distribution Inputs</title>
 </head>
-<!-- style="background: #333; color: whitesmoke;" -->
-<!-- background-color: #162d43; color: whitesmoke; -->
 
  <body>
     <div id ="header" class="h-25 pt-4" style="background-image: url(images/background.jpg); color: whitesmoke;">
@@ -17,6 +15,7 @@
             <h1>Detecting Out-of-Distribution Inputs</h1>
             <h5>A reproducibility project based on the paper of Serra et al.: “Input
            complexity and out-of-distribution detection with likelihood-based generative models"</h5>
+            <p class="text-center">by <a style="color: white;" href="https://github.com/ThanosM97">Athanasios Masouris</a>, <a style="color: white;" href="https://github.com/stypoumic">Stylianos Poulakakis-Daktylidis</a>, <a style="color: white;" href="https://github.com/SofiaKstk">Sofia Kostakonti</a>, <a style="color: white;" href="https://github.com/omarbay">Omar Bayomie</a></p>
         </div>  
     </div>
     <section class="w-50 mx-auto">
@@ -158,8 +157,9 @@
             Tables <a href="#tab2">2</a> and <a href="#tab3">3</a> respectively. Regarding the training, both models were trained for 200 epochs, with a fixed learning rate 
             of 0.001 and a batch size of 128 images.</p>
         
-        <div id="tab2" class="d-flex justify-content-evenly">
-            <table class="d-inline table table-border text-center">
+        <div class="d-flex justify-content-around">
+            <div>
+            <table id="tab2" class="table table-border text-center">
                 <caption class="text-center">Table 2: Encoder Architecture</caption>
                 <thead>
                 <tr>
@@ -184,8 +184,9 @@
                     <td>Conv5</td><td>--</td><td>--</td><td>2* latent_dim</td></tr>
                 </tbody>
             </table>
-
-            <table id="tab3" class="d-inline table table-border text-center">
+            </div>
+            <div>
+            <table id="tab3" class="table table-border text-center">
                 <caption class="text-center">Table 3: Decoder Architecture</caption>
                 <thead>
                 <tr>
@@ -210,6 +211,7 @@
                     <td>Output</td><td>5x5</td><td>2x2</td><td>3</td></tr>
                 </tbody>
             </table>
+        </div>
         </div>
         
         <p>VAEs learn stochastic non-invertible transformations, which typically inhibits tractable estimation of the marginal likelihoods, as described in 
@@ -237,7 +239,7 @@
              not hold, at least for generative models trained on less complicated datasets.</p>
 
         <figure id="fig5" class="text-center">
-            <img src="images/plot_FMNIST.png" alt="likelihood-plots" class="figure-img w-50">
+            <img src="images/plot_FMNIST.png" alt="likelihood-plots" class="figure-img">
             <figcaption class="figure-caption text-center">Figure 5: Complexity estimates using a PNG compressor with respect to normalized likelihoods of a VAE model trained 
                 on FMNIST (for visualization purposes, we here employ a sample of 200 images per data set).</figcaption>
         </figure>
@@ -301,7 +303,7 @@
 
 
         <figure id="fig6" class="text-center">
-            <img src="images/plot_CIFAR10.png" alt="likelihood-plots" class="figure-img w-50">
+            <img src="images/plot_CIFAR10.png" alt="likelihood-plots" class="figure-img" style="width: 60%;">
             <figcaption class="figure-caption text-center">Figure 6: Complexity estimates using a PNG compressor with respect to normalized likelihoods of a VAE model trained 
                 on CIFAR10 (for visualization purposes, we here employ a sample of 200 images per data set).</figcaption>
         </figure>
