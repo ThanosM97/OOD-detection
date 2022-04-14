@@ -10,7 +10,7 @@
 </head>
 
  <body>
-    <div id ="header" class="h-25 pt-4" style="background-image: url(images/background.jpg); color: whitesmoke;">
+    <div id ="header" class="h-25 pt-4" style="background-image: url('https://user-images.githubusercontent.com/40756918/163460859-5a775f6e-e546-418d-8d12-9f055dbd68b3.jpg'); color: whitesmoke;">
         <div class="w-50 mx-auto text-center" >
             <h1>Detecting Out-of-Distribution Inputs</h1>
             <h5>A reproducibility project based on the paper of Serra et al.: “Input
@@ -42,7 +42,7 @@
             from their likelihood estimations. To adduce a pertinent example, <a href="#fig1">Figure 1</a> shows that generative models trained on CIFAR10 can yield higher 
             likelihood scores for a simple dataset (SVHN) than for CIFAR10 itself.</p>
         <figure id="fig1" class="text-center">
-            <img src="images/likelihoods.JPG" alt="likelihoods" class="figure-img">
+            <img src="https://user-images.githubusercontent.com/40756918/163460964-23b556e7-fd26-4a0a-bba0-0161c0efde02.JPG" alt="likelihoods" class="figure-img">
             <figcaption class="figure-caption text-center">Figure 1: Likelihoods from a Glow model trained on CIFAR10, adapted from <a href="#4">Serra et al.(2019)</a>.</figcaption>
         </figure>
         <p>In <a href="#4">Serra et al. (2019)</a>, the authors attempt to clarify the roots for this predicament, by claiming that the likelihoods produced from generative models 
@@ -72,7 +72,7 @@
             of the latent space, and by extension its generative capabilities, both the covariance and the mean distributions of the encoder need to be regularized.</p>
         
         <figure id="fig2" class="text-center">
-            <img src="images/VAE representation.JPG" alt="vae" class="figure-img w-75">
+            <img src="https://user-images.githubusercontent.com/40756918/163461232-738dfbc0-2ae1-4675-881f-c503dca86a0a.JPG" alt="vae" class="figure-img w-75">
             <figcaption class="figure-caption text-center">Figure 2: Architecture of Variational AutoEncoders.</figcaption>
         </figure>
 
@@ -96,7 +96,7 @@
               whereas the authors triplicated the channel dimension of gray-scale images to produce 3 channels.</p>
         
         <figure id="tab1" class="text-center">
-            <img src="images/datasets.png" alt="datasets" class="figure-img w-75">
+            <img src="https://user-images.githubusercontent.com/40756918/163461300-9994f286-483a-4bec-85a8-0becadc02988.png" alt="datasets" class="figure-img w-75">
             <figcaption class="figure-caption text-center">Table 1: Summary of the data sets considered in <a href="#4">Serra et al.(2019)</a>.</figcaption>
         </figure>
         
@@ -107,7 +107,7 @@
             designing an OOD detection score based on complexity.</p>
         
         <figure id="fig3" class="text-center">
-            <img src="images/loglikelihoods.png" alt="log-likelihoods" class="figure-img w-75">
+            <img src="https://user-images.githubusercontent.com/40756918/163461352-9931780b-1e5e-4852-bae0-cebf16bb7eb8.png" alt="log-likelihoods" class="figure-img w-75">
             <figcaption class="figure-caption text-center">Figure 3: Log-likelihoods from a Glow model trained on CIFAR10, adapted from <a href="#4">Serra et al.(2019)</a>.</figcaption>
         </figure>
         
@@ -146,7 +146,7 @@
             the overall architecture of our network, which was used for training and producing our generative model.</p>
         
         <figure id="fig4" class="text-center">
-            <img src="images/network.jpg" alt="network" class="figure-img w-100">
+            <img src="https://user-images.githubusercontent.com/40756918/163461400-4005d8d8-42bd-4762-92a1-d598a3e4661a.jpg" alt="network" class="figure-img w-100">
             <figcaption class="figure-caption text-center">Figure 4: Visualization of the network's architecture.</figcaption>
         </figure>
 
@@ -239,7 +239,7 @@
              not hold, at least for generative models trained on less complicated datasets.</p>
 
         <figure id="fig5" class="text-center">
-            <img src="images/plot_FMNIST.png" alt="likelihood-plots" class="figure-img">
+            <img src="https://user-images.githubusercontent.com/40756918/163461446-f11c5f57-1913-418a-87a6-44e50945bc50.png" alt="likelihood-plots" class="figure-img">
             <figcaption class="figure-caption text-center">Figure 5: Complexity estimates using a PNG compressor with respect to normalized likelihoods of a VAE model trained 
                 on FMNIST (for visualization purposes, we here employ a sample of 200 images per data set).</figcaption>
         </figure>
@@ -303,7 +303,7 @@
 
 
         <figure id="fig6" class="text-center">
-            <img src="images/plot_CIFAR10.png" alt="likelihood-plots" class="figure-img" style="width: 60%;">
+            <img src="https://user-images.githubusercontent.com/40756918/163461450-b728e72e-3184-470f-96d2-0a4f3e0ec908.png" alt="likelihood-plots" class="figure-img" style="width: 60%;">
             <figcaption class="figure-caption text-center">Figure 6: Complexity estimates using a PNG compressor with respect to normalized likelihoods of a VAE model trained 
                 on CIFAR10 (for visualization purposes, we here employ a sample of 200 images per data set).</figcaption>
         </figure>
