@@ -91,41 +91,41 @@ class Decoder(nn.Module):
                                padding=1),
             nn.ReLU(),
 
-            # IN: hidden_dims[0]x3x3 / OUT: hidden_dims[1]x5x5
+            # IN: hidden_dims[0]x3x3 / OUT: hidden_dims[0]x5x5
             nn.ConvTranspose2d(hidden_dims[0],
-                               hidden_dims[1],
+                               hidden_dims[0],
                                kernel_size=5,
                                stride=1,
                                padding=1),
             nn.ReLU(),
 
-            # IN: hidden_dims[1]x5x5 / OUT: hidden_dims[2]x11x11
-            nn.ConvTranspose2d(hidden_dims[1],
-                               hidden_dims[2],
+            # IN: hidden_dims[0]x5x5 / OUT: hidden_dims[1]x11x11
+            nn.ConvTranspose2d(hidden_dims[0],
+                               hidden_dims[1],
                                kernel_size=5,
                                stride=2,
                                padding=1),
             nn.ReLU(),
 
-            # IN: hidden_dims[2]x11x11 / OUT: hidden_dims[3]x13x13
-            nn.ConvTranspose2d(hidden_dims[2],
-                               hidden_dims[3],
+            # IN: hidden_dims[1]x11x11 / OUT: hidden_dims[2]x13x13
+            nn.ConvTranspose2d(hidden_dims[1],
+                               hidden_dims[2],
                                kernel_size=5,
                                stride=1,
                                padding=1),
             nn.ReLU(),
 
-            # IN: hidden_dims[3]x13x13 / OUT: output_dimx28x28
-            nn.ConvTranspose2d(hidden_dims[3],
-                               out_channels=output_dim,
+            # IN: hidden_dims[2]x13x13 / OUT: hidden_dims[3]x28x28
+            nn.ConvTranspose2d(hidden_dims[2],
+                               out_channels=hidden_dims[3],
                                kernel_size=5,
                                stride=2,
                                padding=1,
                                output_padding=1),
             nn.ReLU(),
 
-            # IN: output_dimx28x28 / OUT: output_dimx32x32
-            nn.ConvTranspose2d(output_dim,
+            # IN: hidden_dims[3]x28x28 / OUT: output_dimx32x32
+            nn.ConvTranspose2d(hidden_dims[3],
                                output_dim,
                                kernel_size=5,
                                stride=1)
