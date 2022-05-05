@@ -1,5 +1,5 @@
 # Detecting Out-of-Distribution Inputs
-## A reproducibility project based on the paper of Serra et al.: “Input complexity and out-of-distribution detection with likelihood-based generative models"
+## A re-implementation project of Serra et al.: “Input complexity and out-of-distribution detection with likelihood-based generative models"
 
 In this project, we are reproducing the work of [Serra et al.](https://arxiv.org/abs/1909.11480) (2019) to address the input complexity problem on OOD detection for likelihood-based generative models. We train Variational AutoEncoders (VAEs) on the FashionMNIST and CIFAR10 datasets, and then evaluate their performance on OOD detection on four popular datasets, namely MNIST, OMNIGLOT, CIFAR100, and CelebA, and two synthetic datasets of Random Gaussian Noise and Constant values. 
 
